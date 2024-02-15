@@ -15,7 +15,7 @@ module.exports = {
   async execute(interaction) {
     
     if (interaction.options.getSubcommand() === 'setup') {
-      // Erstelle ein Embed mit einem Timestamp im Footer
+      
       const ticketEmbed = new EmbedBuilder()
         .setColor(0x0099ff)
         .setDescription(`### \`👋\`〢Create a Ticket
