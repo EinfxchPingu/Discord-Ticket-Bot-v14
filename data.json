@@ -1,0 +1,29 @@
+{
+  "tickets": [],
+  "todo-category": [
+    {
+      "discord": {
+        "todos": [
+          {
+            "id": 1,
+            "text": "Kategorien design",
+            "status": "🟢"
+          },
+          {
+            "id": 2,
+            "text": "channel design"
+          },
+          {
+            "id": 3,
+            "text": "Community Einführung"
+          },
+          {
+            "id": 4,
+            "text": "Rollen design",
+            "status": "🟡"
+          }
+        ]
+      }
+    }
+  ]
+}
