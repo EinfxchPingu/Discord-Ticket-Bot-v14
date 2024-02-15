@@ -9,35 +9,6 @@ const fs = require('fs');
 const dataFilePath = path.join(__dirname, 'data.json');
 let data = require(dataFilePath);
 
-let partnerData = JSON.parse(fs.readFileSync('partner.json', 'utf8'));
-
-function updateCooldowns() {
-    for (const roleKey in partnerData.Partner) {
-        const roleData = partnerData.Partner[roleKey];
-        if (roleData.users) {
-            for (const userId in roleData.users) {
-                let cooldownHours = roleData.users[userId];
-                if (cooldownHours > 0) {
-                    cooldownHours--; // Verringere den Cooldown um 1 Stunde
-                    roleData.users[userId] = cooldownHours;
-                }
-                if (cooldownHours === 0) {
-                    delete roleData.users[userId]; // Entferne den Eintrag, wenn der Cooldown auf 0 sinkt
-                }
-            }
-        }
-
-        // Speichere die aktualisierten Partnerdaten in der Datei
-        fs.writeFileSync('partner.json', JSON.stringify(partnerData, null, 2));
-    }
-}
-
-
-function startCooldownUpdateLoop() {
-    console.log("cooldownUpdate started");
-    setInterval(updateCooldowns, 3600000); // 1 Stunde = 3600000 Millisekunden
-}
-
 if (!data.tickets) {
   data.tickets = [];
   fs.writeFileSync(dataFilePath, JSON.stringify(data, null, 2));
@@ -163,35 +134,7 @@ client.on('interactionCreate', async (interaction) => {
   if (!interaction.isButton()) return;
   const threadId = interaction.channelId;
   const thread = await client.channels.fetch(threadId);
-  if (interaction.customId === 'confirm') {
-    const userOption = interaction.options.getUser('user');
-    const stringOption = interaction.options.getString('reason');
-    if (!userOption) {
-        return interaction.reply({ content: '`❌`〢Please specify a user to ban.', ephemeral: true });
-    }
 
-    const memberToBan = interaction.guild.members.cache.get(userOption.id);
-
-    if (!memberToBan) {
-        return interaction.reply({ content: '`❌`〢User not found.', ephemeral: true });
-    }
-    
-    if (!memberToBan.bannable) {
-        return interaction.reply({ content: '`❌`〢I cannot ban this user.', ephemeral: true });
-    }
-
-    memberToBan.ban({ reason: stringOption || 'No reason provided.' })
-        .then(() => {
-            interaction.reply({ content: `\`✅\`〢Successfully banned <${userOption.id}>.`, ephemeral: true });
-        })
-        .catch(error => {
-            console.error('Error banning user:', error);
-            interaction.reply({ content: '`❌`〢An error occurred while banning the user.', ephemeral: true });
-        });
-}
-if (interaction.customId === 'cancel') {
-      
-  }
   if (interaction.customId === 'close') {
     const confembed = new EmbedBuilder()
       .setTitle(`\`❗\`〢Are you sure?`)
