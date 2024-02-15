@@ -47,8 +47,8 @@ const client = new Client({
   partials: [Partials.Channel],
 });
 
-const clientId = '1077729475502026772';
-const token = 'MTA3NzcyOTQ3NTUwMjAyNjc3Mg.GoxRug.a8880u5H8kPfeZlk0eiQWOe_-PM83dCqmQeZxI';
+const clientId = 'BOT_CLIENT_ID';
+const token = 'BOT_TOKEN';
 
 client.once('ready', () => {
   console.log(`Logged in as ${client.user.tag}`);
@@ -235,9 +235,9 @@ if (interaction.customId === 'cancel') {
 
       const ftpClient = new ftp.Client();
       await ftpClient.access({
-        host: 'ftp.cluster029.hosting.ovh.net',
-        user: 'einfxca',
-        password: 'Einfxchpinguin23',
+        host: 'HOSTNAME',
+        user: 'USERNAME',
+        password: 'PASSWORD',
       });
 
       await ftpClient.uploadFrom(transcriptFilePath, `/www/ticket/${interaction.channel.id}.html`);
