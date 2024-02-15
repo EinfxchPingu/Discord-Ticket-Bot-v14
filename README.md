@@ -1,6 +1,3 @@
-Sure, here's a README file for your Discord bot:
-
----
 
 # Ticket Bot
 
