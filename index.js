@@ -20,6 +20,7 @@ const client = new Client({
 
 const clientId = 'BOT_CLIENT_ID';
 const token = 'BOT_TOKEN';
+const logChannelId = 'LOG_CHANNEL_ID';
 
 client.once('ready', () => {
   console.log(`Logged in as ${client.user.tag}`);
@@ -105,7 +106,6 @@ Creator: \`${interaction.user.tag}\`
             .setCustomId('join')
             .setLabel('🚪 x Join the Ticket')
             .setStyle(ButtonStyle.Secondary);
-          const logChannelId = '1198283818717696042';
           const logChannel = await interaction.guild.channels.cache.get(logChannelId);
 		  const logembedrow = new ActionRowBuilder()
             .addComponents(buttonlog);
@@ -185,7 +185,6 @@ client.on('interactionCreate', async (interaction) => {
 
       await ftpClient.uploadFrom(transcriptFilePath, `/www/ticket/${interaction.channel.id}.html`);
 
-      const logChannelId = '1198283818717696042';
       const logChannel = await interaction.guild.channels.cache.get(logChannelId);
 
       await logChannel.send({ embeds: [logEmbed], components: [TButton] });
