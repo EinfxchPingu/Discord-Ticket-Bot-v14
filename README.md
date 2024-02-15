@@ -13,12 +13,13 @@ This Discord bot manages support tickets, allowing users to create, close, and j
 ## Setup
 1. Clone this repository to your local machine.
 2. Install dependencies using `npm install`.
-3. Replace `'BOT_CLIENT_ID'` and `'BOT_TOKEN'` with your bot's client ID and token respectively.
+3. Replace `BOT_CLIENT_ID` and `BOT_TOKEN` with your bot's client ID and token respectively.
 4. Replace `HOSTNAME`, `USERNAME` and `PASSWORD` with your ftp server user data.
-5. Ensure proper permissions for your bot, granting access to create and manage threads, as well as send messages in designated channels.
-6. Customize the bot's behavior and appearance as needed.
-7. Deploy the bot to your preferred hosting platform.
-8. Start the bot with `npm start` or your preferred method.
+5. Replace `LOG_CHANNEL_ID` with your log channel id.
+6. Ensure proper permissions for your bot, granting access to create and manage threads, as well as send messages in designated channels.
+7. Customize the bot's behavior and appearance as needed.
+8. Deploy the bot to your preferred hosting platform.
+9. Start the bot with `npm start` or your preferred method.
 
 ## Usage
 - To create a new ticket, use the `/ticket setup` command and select a category (support, apply, report).
