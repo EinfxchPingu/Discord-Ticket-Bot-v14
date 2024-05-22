@@ -270,35 +270,6 @@ async function uploadToPastebin(messageLog) {
     }
 }
 
-
-client.on(Events.InteractionCreate, interaction => {
-	if (!interaction.isModalSubmit()) return;
-
-	const name = interaction.fields.getTextInputValue('ingameNameInput');
-	const duration = interaction.fields.getTextInputValue('durationInput');
-	const reason = interaction.fields.getTextInputValue('reasonInput');
-    
-    const AbmeldungsEmbed = new EmbedBuilder()
-        .setTitle(`\`🔻\`〢Ein Benutzer hat sich abgemeldet!`)
-        .setDescription(`・Benutzer: <@${interaction.user.id}>
-					・Minecraft Name: \`${name}\`
-                    ・Dauer: \`${duration}\`
-          			・Grund: \`${reason}\`
-                    ・Datum und Uhrzeit: ${formatDateInBerlinTimezone(new Date())}`)
-        .setColor('#E17272');
-
-      
-      const logChannel = interaction.guild.channels.cache.get(logChannelId);
-	
-      logChannel2.send({ embeds: [AbmeldungsEmbed] });
-      
-	interaction.reply({ content:`\`✅\`〢Du hast deine Abmeldung erfolgreich abgeschickt. Hier nochmal deine Angaben:
-
-> Benutzername: \`${name}\`
-> Dauer: \`${duration}\`
-> Grund: \`${reason}\``, ephemeral: true })	
-});
-
 client.commands = new Map();
 
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
