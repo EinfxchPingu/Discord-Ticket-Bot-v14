@@ -1,33 +1,30 @@
-
 # Ticket Bot
 
-## Description
-This Discord bot manages support tickets, allowing users to create, close, and join ticket threads with ease.
+`🎫`〢**Dein zuverlässiger Helfer für Support-Tickets!**
 
-## Features
-- **Ticket Creation:** Users can create support tickets with custom topics.
-- **Ticket Closure:** Administrators can close tickets, generating transcripts and archiving threads.
-- **Join Ticket:** Users can join existing ticket threads.
-- **Transcripts:** Transcripts are generated upon ticket closure for record-keeping.
+__Was er bietet:__
 
-## Setup
-1. Clone this repository to your local machine.
-2. Install dependencies using `npm install`.
-3. Replace `BOT_CLIENT_ID` and `BOT_TOKEN` with your bot's client ID and token respectively.
-4. Replace `HOSTNAME`, `USERNAME` and `PASSWORD` with your ftp server user data.
-5. Replace `LOG_CHANNEL_ID` with your log channel id.
-6. Ensure proper permissions for your bot, granting access to create and manage threads, as well as send messages in designated channels.
-7. Customize the bot's behavior and appearance as needed.
-8. Deploy the bot to your preferred hosting platform.
-9. Start the bot with `npm start` or your preferred method.
+- `📥`〢**Ticket-Erstellung:** Benutzer können Support-Tickets mit individuellen Themen erstellen.
+- `🔒`〢**Ticket-Schließung:** Administratoren können Tickets schließen, Transkripte generieren und Threads archivieren.
+- `👥`〢**Ticket-Beitritt:** Benutzer können bestehenden Ticket-Threads beitreten.
+- `📝`〢**Transkripte:** Transkripte werden bei Ticket-Schließung zur Aufbewahrung erstellt.
 
-## Usage
-- To create a new ticket, use the `/ticket setup` command and select a category (support, apply, report).
-- Administrators can close tickets by clicking the 'Close Ticket' button and confirming the action.
-- Users can join existing tickets by clicking the 'Join the Ticket' button.
+## Beschreibung
+Dieser Discord-Bot verwaltet Support-Tickets und ermöglicht es Benutzern, Tickets einfach zu erstellen, zu schließen und Ticket-Threads beizutreten.
 
-## Contributing
-Contributions are welcome! Feel free to submit issues or pull requests to enhance the functionality or fix any bugs.
+## Einrichtung
+1. Klone dieses Repository auf deine lokale Maschine.
+2. Installiere die Abhängigkeiten mit `npm install`.
+3. Ersetze `BOT_CLIENT_ID` und `BOT_TOKEN` durch die Client-ID und den Token deines Bots.
+5. Stelle sicher, dass dein Bot die richtigen Berechtigungen hat, um Threads zu erstellen und zu verwalten sowie Nachrichten in den entsprechenden Kanälen zu senden.
+6. Passe das Verhalten und das Aussehen des Bots nach Bedarf an.
+7. Setze den Bot auf deiner bevorzugten Hosting-Plattform ein.
+8. Starte den Bot mit `node .` oder deiner bevorzugten Methode.
 
-## License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## Nutzung
+- Um ein neues Ticket zu erstellen, verwende den Befehl `/ticket setup` und wähle eine Kategorie (Support, Bewerbung, Meldung).
+- Administratoren können Tickets schließen, indem sie auf die Schaltfläche "Ticket schließen" klicken oder dem Befehl `/closerequest`.
+- Administratoren können bestehenden Tickets beitreten, indem sie auf die Schaltfläche "Ticket beitreten" klicken.
+
+## Lizenz
+Dieses Projekt ist unter der MIT-Lizenz lizenziert.
