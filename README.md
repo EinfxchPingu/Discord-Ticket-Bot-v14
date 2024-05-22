@@ -25,6 +25,3 @@ Dieser Discord-Bot verwaltet Support-Tickets und ermöglicht es Benutzern, Ticke
 - Um ein neues Ticket zu erstellen, verwende den Befehl `/ticket setup` und wähle eine Kategorie (Support, Bewerbung, Meldung).
 - Administratoren können Tickets schließen, indem sie auf die Schaltfläche "Ticket schließen" klicken oder dem Befehl `/closerequest`.
 - Administratoren können bestehenden Tickets beitreten, indem sie auf die Schaltfläche "Ticket beitreten" klicken.
-
-## Lizenz
-Dieses Projekt ist unter der MIT-Lizenz lizenziert.
