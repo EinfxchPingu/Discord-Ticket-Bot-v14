@@ -1,58 +1,73 @@
-const { Client, GatewayIntentBits, Partials, ActivityType, ChannelType, PermissionsBitField, ButtonBuilder, ButtonStyle, EmbedBuilder, ActionRowBuilder, Events, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+const { Client, GatewayIntentBits, Partials, ActivityType, ChannelType, PermissionsBitField, ButtonBuilder, ButtonStyle, EmbedBuilder, ActionRowBuilder, Events, Collection, ModalBuilder, TextInputBuilder, AttachmentBuilder, TextInputStyle, AuditLogEvent } = require('discord.js');
 const path = require('path');
 const ftp = require('basic-ftp');
-const discordTranscripts = require('discord-html-transcripts');
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const fs = require('fs');
+const axios = require('axios');
 
 const dataFilePath = path.join(__dirname, 'data.json');
 let data = require(dataFilePath);
+
 
 if (!data.tickets) {
   data.tickets = [];
   fs.writeFileSync(dataFilePath, JSON.stringify(data, null, 2));
 }
-const client = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates],
-  partials: [Partials.Channel],
-});
-
-const clientId = 'BOT_CLIENT_ID';
-const token = 'BOT_TOKEN';
-const logChannelId = 'LOG_CHANNEL_ID';
-
-client.once('ready', () => {
-  console.log(`Logged in as ${client.user.tag}`);
-  const totalMembers = client.guilds.cache.reduce((acc, guild) => acc + guild.memberCount, 0);
-  const openTicketsCount = data.tickets.length;
-  client.user.setPresence({
-    activities: [{ name: `📖 - auf ${totalMembers} Mitglieder`, type: ActivityType.Watching }],
-    status: 'dnd',
-  });
-});
-
 
 function formatDateInBerlinTimezone(date) {
   const berlinTimezone = 'Europe/Berlin';
   return new Date(date).toLocaleString('de-DE', { timeZone: berlinTimezone });
+ }
+
+
+const client = new Client({
+  intents: Object.keys(GatewayIntentBits).map((a)=>{
+    return GatewayIntentBits[a]
+  }),
+  partials: [
+      Partials.Channel
+  ],
+});
+
+const clientId = 'BOT_CLIENT_ID';
+const token = 'BOT_TOKEN';
+const ticket_sperre_id = 'BEWERBUNGS_SPERREN_ROLLEN_ID';
+const guildId = 'SERVER_ID';
+const logChannelId = 'LOGS_CHANNEL_ID';
+         
+client.once('ready', () => {
+  console.log(`🔥 | Bot eingeloggt als ${client.user.tag}`);
+  console.log(`⏱️ | Zeitzone gesetzt auf Europe/Berlin (${formatDateInBerlinTimezone(new Date())})`);
+  updatePresence();
+  setInterval(updatePresence, 160000);
+   });
+
+function updatePresence() {
+  const totalTickets = data.tickets.length;
+  client.user.setPresence({
+    activities: [{ name: `🎫 - ${totalTickets} Tickets`, type: ActivityType.Watching }],
+    status: 'dnd',
+  });
 }
-
-
-
-//Module - Ticket interaction
-
 client.on('interactionCreate', async interaction => {
   if (!interaction.isSelectMenu()) return;
 
   const selectedValue = interaction.values[0];
-
-  if (selectedValue === 'support' || selectedValue === 'apply' || selectedValue === 'report') {
+  const ticket1 = data.tickets.find(t => t.userid === interaction.user.id);
+   if (interaction.member.roles.cache.has(ticket_sperre_id)) {
+       return interaction.reply({content:"`❌`〢Du hast eine Bewerbungssperre und kannst deshalb kein Ticket öffnen", ephemeral: true});
+   }
+  if (selectedValue === 'cancel') {
+      await interaction.deferUpdate();
+  }
+ if (!ticket1) {
+  if (selectedValue === 'support' || selectedValue === 'meldung' || selectedValue === 'bewerbung' || selectedValue === 'ausleih') {
     const username = interaction.user.username;
     const formattedUsername = username.charAt(0).match(/[a-zA-Z]/) ? username.charAt(0).toUpperCase() + username.slice(1) : username;
     const fselect = selectedValue.charAt(0).match(/[a-zA-Z]/) ? selectedValue.charAt(0).toUpperCase() + selectedValue.slice(1) : selectedValue;
 
-    const channelName = `🎫︱${formattedUsername}`;
+    const channelName = `${fselect}︱${interaction.user.globalName}`;
     const categoryId = interaction.channel.parentId;
 
     try {
@@ -71,22 +86,21 @@ client.on('interactionCreate', async interaction => {
 		],
        })
         .then(async (thread) => {
+          updatePresence();
           await thread.members.add(interaction.user);
 		  const ticketembed = new EmbedBuilder()
-            .setTitle(`\`🎫\`〢Welcome in your Ticket!`)
+            .setTitle(`\`🎫\`〢${fselect} - ${interaction.user.globalName}`)
             .setThumbnail(interaction.user.displayAvatarURL())
-            .setDescription(`Hey <@${interaction.user.id}>!
->>> Your support ticket has been successfully created and a responsible team member has been contacted. It's best to think in advance about how you want to formulate your request.
+            .setDescription(`Willkommen zu Ihrem Ticket! Ein Teammitglied wird sich so schnell wie möglich um Sie kümmern. Bitte beschreiben Sie Ihr Problem so genau wie möglich. Sie können das Ticket jederzeit schließen, indem Sie auf die Schaltfläche unten klicken.
 
-**Ticket Details**
-Theme: \`${fselect}\`
-Creator: \`${interaction.user.tag}\`
-`)
+**Details:**
+> Ticket Panel: ${fselect}
+> Erstellt am: ${formatDateInBerlinTimezone(new Date())}`)
             .setColor('#0798e3');
 
           const closebutton = new ButtonBuilder()
             .setCustomId('close')
-            .setLabel('⛔ x Close Ticket')
+            .setLabel('⛔ x Ticket schließen')
             .setStyle(ButtonStyle.Secondary);
 
          
@@ -95,16 +109,16 @@ Creator: \`${interaction.user.tag}\`
           thread.send({ embeds: [ticketembed], components: [embedrow] });
 
           const logEmbed2 = new EmbedBuilder()
-              .setTitle(`\`🔓\`〢A ticket has been opened!`)
+              .setTitle(`\`🔓\`〢Ein Ticket wurde geöffnet!`)
         .setDescription(`・Ticket-ID: #${interaction.channel.id}
 					・Ticket Panel: ${fselect}
-                    ・Ticket created by: <@${interaction.user.id}> *(${interaction.user.tag})*
-                    ・Date and time: ${formatDateInBerlinTimezone(new Date())}`)
+                    ・Ticket erstellt von: <@${interaction.user.id}> *(${interaction.user.tag})*
+                    ・Datum und Uhrzeit: ${formatDateInBerlinTimezone(new Date())}`)
         .setColor('#89CA8C');
 
           const buttonlog = new ButtonBuilder()
             .setCustomId('join')
-            .setLabel('🚪 x Join the Ticket')
+            .setLabel('🚪 x Ticket beitreten')
             .setStyle(ButtonStyle.Secondary);
           const logChannel = await interaction.guild.channels.cache.get(logChannelId);
 		  const logembedrow = new ActionRowBuilder()
@@ -114,17 +128,23 @@ Creator: \`${interaction.user.tag}\`
 
           const ticketData = {
             ticketId: thread.id,
+            userid: interaction.user.id,
+            usertag: interaction.user.tag,
+            ticketpanel: selectedValue,
             logEmbed2Id: sentLogEmbed2.id,
           };
 
           data.tickets.push(ticketData);
           fs.writeFileSync(dataFilePath, JSON.stringify(data, null, 2));
 
-          await interaction.reply({ content: `\`✅\`〢Your ticket was created here: <#${thread.id}>`, ephemeral: true });
+          await interaction.reply({ content: `\`✅\`〢Dein Ticket wurde hier erstellt: <#${thread.id}>`, ephemeral: true });
         })
     } catch (error) {
-      interaction.reply({ content: '`❌`〢An error has occurred! Please report the following error to an administrator:``` ' + error + "```", ephemeral: true });
+      interaction.reply({ content: '`❌`〢Es ist ein Fehler aufgetreten! Bitte melde folgenden Error einem Administrator:``` ' + error + "```", ephemeral: true });
     };
+  }
+  } else {
+      await interaction.reply({ content:"`❌`〢Du kannst nicht mehr als ein Ticket erstellen", ephemeral: true })
   }
   
 });
@@ -134,99 +154,150 @@ client.on('interactionCreate', async (interaction) => {
   if (!interaction.isButton()) return;
   const threadId = interaction.channelId;
   const thread = await client.channels.fetch(threadId);
-
-  if (interaction.customId === 'close') {
-    const confembed = new EmbedBuilder()
-      .setTitle(`\`❗\`〢Are you sure?`)
-      .setThumbnail(interaction.user.displayAvatarURL())
-      .setDescription(`>>> Are you sure you want to close the ticket? This process cannot be undone!`)
-      .setColor('#FF0000');
-
-    const closeconfbutton = new ButtonBuilder()
-      .setCustomId('close_conf')
-      .setLabel('⛔ x Close Ticket')
-      .setStyle(ButtonStyle.Secondary);
-    const buttonsRow2 = new ActionRowBuilder()
-      .addComponents(closeconfbutton);
-
-    interaction.reply({ embeds: [confembed], components: [buttonsRow2] });
-
-  } else if (interaction.customId === 'close_conf') {
+  if (interaction.customId === 'verweigerung') {
+          if (interaction.user.id !== ticketData.userid) {
+        return interaction.reply({ content:"`❌`〢Du kannst du nicht!", ephemeral: true });
+    }
+      interaction.message.delete();
+  } else if (interaction.customId === 'close' || interaction.customId === 'accept') {
     try {
-      const transcriptAttachment = await discordTranscripts.createTranscript(interaction.channel);
+        if (interaction.customId === 'accept' && interaction.user.id !== ticketData.userid) {
+        return interaction.reply({ content:"`❌`〢Du kannst du nicht!", ephemeral: true });
+    }
+    
+        const ticketuserId = ticketData ? ticketData.userid : null;
+        const ticketusertag = ticketData ? ticketData.usertag : null;
+        const selectedticketpanel = ticketData ? ticketData.ticketpanel : null;
+        const fselectedpanel = selectedticketpanel.charAt(0).match(/[a-zA-Z]/) ? selectedticketpanel.charAt(0).toUpperCase() + selectedticketpanel.slice(1) : selectedticketpanel;
 
-      const transcriptsFolder = 'transcripts';
-      if (!fs.existsSync(transcriptsFolder)) {
-        fs.mkdirSync(transcriptsFolder);
-      }
-      const transcriptFilePath = path.join(transcriptsFolder, `${interaction.channel.id}.html`);
-      fs.writeFileSync(transcriptFilePath, transcriptAttachment.attachment);
+        const logEmbed = new EmbedBuilder()
+            .setTitle(`\`🔒\`〢Ein Ticket wurde geschlossen!`)
+            .setDescription(`・Ticket-ID: #${interaction.channel.id}
+                    ・Ticket Panel: ${fselectedpanel}
+                    ・Ticket erstellt von: <@${ticketuserId}> *(${ticketusertag})*
+                    ・Ticket geschlossen von: <@${interaction.user.id}> *(${interaction.user.tag})*
+                    ・Datum und Uhrzeit: ${formatDateInBerlinTimezone(new Date())}`)
+            .setColor('#E17272');
+        
+        
 
-      const logEmbed = new EmbedBuilder()
-        .setTitle(`\`🔒\`〢A ticket has been closed!`)
-        .setDescription(`・Ticket-ID: ${interaction.channel.id}
-                    ・Ticket closed by: <@${interaction.user.id}> *(${interaction.user.tag})*
-                    ・Date and Time: ${formatDateInBerlinTimezone(new Date())}`)
-        .setColor('#E17272');
+        const logChannel = await interaction.guild.channels.cache.get(logChannelId);
 
-      const viewTranscriptButton = new ButtonBuilder()
-        .setLabel('📝 x Open Transcript')
-        .setStyle(ButtonStyle.Link)
-        .setURL(`https://einfxchpingu.net/ticket/${interaction.channel.id}.html`);
+        const messages = await interaction.channel.messages.fetch();
+        let messageLog = '';
 
-      const TButton = new ActionRowBuilder().addComponents(viewTranscriptButton);
+        messages.forEach(message => {
+            const timestamp = formatDateInBerlinTimezone(message.createdAt);
+            const username = message.author.username;
+            const content = message.content;
 
-      const ftpClient = new ftp.Client();
-      await ftpClient.access({
-        host: 'HOSTNAME',
-        user: 'USERNAME',
-        password: 'PASSWORD',
-      });
+            messageLog += `[${timestamp}] ${username}: ${content}\n`;
+        });
 
-      await ftpClient.uploadFrom(transcriptFilePath, `/www/ticket/${interaction.channel.id}.html`);
+        const pasteBinUrl = await uploadToPastebin(messageLog);
+         const transcriptbutton = new ButtonBuilder()
+      .setLabel('🔗 x Transcript öffnen')
+      .setURL(pasteBinUrl)
+      .setStyle(ButtonStyle.Link);
+    const buttonsRow3 = new ActionRowBuilder()
+      .addComponents(transcriptbutton);
 
-      const logChannel = await interaction.guild.channels.cache.get(logChannelId);
+		
+        await logChannel.send({ embeds: [logEmbed], components: [buttonsRow3] });
+        await interaction.reply({ content:"`🔒`〢Du hast das Ticket erfolgreich geschlossen!", ephemeral: true })
+        await thread.send('`🔒`〢Ticket wurde geschlossen!');
 
-      await logChannel.send({ embeds: [logEmbed], components: [TButton] });
-      await thread.send('Ticket wurde geschlossen!');
-      await thread.setArchived(true);
-
-      const ticketData = data.tickets.find(t => t.ticketId === thread.id);
-
-      if (ticketData) {
-        const dataIndex = data.tickets.indexOf(ticketData);
-        data.tickets.splice(dataIndex, 1);
-        fs.writeFileSync(dataFilePath, JSON.stringify(data, null, 2));
-      }
+        if (ticketData) {
+            const dataIndex = data.tickets.indexOf(ticketData);
+            data.tickets.splice(dataIndex, 1);
+            fs.writeFileSync(dataFilePath, JSON.stringify(data, null, 2));
+        }
+        await thread.delete();
 
     } catch (error) {
-      interaction.reply({ content: '`❌`〢An error has occurred!Please report the following error to an administrator:``` ' + error + "```", ephemeral: true });
+        interaction.reply({ content: '`❌`〢Es ist ein Fehler aufgetreten! Bitte melde folgenden Error einem Administrator:``` ' + error + "```", ephemeral: true });
     }
-  
 } else if (interaction.customId === 'join') {
     try {
       const ticketData = data.tickets.find(t => t.logEmbed2Id === interaction.message.id);
 
       if (ticketData) {
         const threadId = ticketData.ticketId;
+        const ticketpanel = ticketData.ticketpanel;
         const thread = await client.channels.fetch(threadId);
-
+        
         if (thread) {
           await thread.members.add(interaction.user);
-          await interaction.reply({ content: `\`✅\`〢You have been added to the ticket: <#${thread.id}>`, ephemeral: true });
+          await interaction.reply({ content: `\`✅\`〢Du wurdest dem Ticket hinzugefügt: <#${thread.id}>`, ephemeral: true });
         } else {
-          await interaction.reply({ content: '`❌`〢An error has occurred!', ephemeral: true });
+          await interaction.reply({ content: '`❌`〢Das Ticket existiert nicht mehr oder ein Fehler ist aufgetreten!', ephemeral: true });
         }
       } else {
-        await interaction.reply({ content: '`❌`〢The ticket could not be found!', ephemeral: true });
+        await interaction.reply({ content: '`❌`〢Das Ticket konnte nicht gefunden werden!', ephemeral: true });
       }
     } catch (error) {
-      interaction.reply({ content: '`❌`〢An error has occurred!Please report the following error to an administrator:``` ' + error + "```", ephemeral: true });
+      interaction.reply({ content: '`❌`〢Es ist ein Fehler aufgetreten! Bitte melde folgenden Error einem Administrator:``` ' + error + "```", ephemeral: true });
     }
   }  
 });
+
+
+
+async function uploadToPastebin(messageLog) {
+    const apiKey = 'PASTEBIN_API_KEY'; 
+    const apiUrl = 'https://pastebin.com/api/api_post.php';
+
+    const formData = new URLSearchParams();
+    formData.append('api_dev_key', apiKey);
+    formData.append('api_option', 'paste');
+    formData.append('api_paste_code', messageLog);
+    formData.append('api_paste_private', '1');
+
+    try {
+        const response = await axios.post(apiUrl, formData, {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        });
+
+        if (response.data.startsWith('https://')) {
+            return response.data; 
+        } else {
+            throw new Error('Fehler beim Hochladen auf Pastebin');
+        }
+    } catch (error) {
+        throw new Error('Fehler beim Hochladen auf Pastebin: ' + error.message);
+    }
+}
+
+
+client.on(Events.InteractionCreate, interaction => {
+	if (!interaction.isModalSubmit()) return;
+
+	const name = interaction.fields.getTextInputValue('ingameNameInput');
+	const duration = interaction.fields.getTextInputValue('durationInput');
+	const reason = interaction.fields.getTextInputValue('reasonInput');
+    
+    const AbmeldungsEmbed = new EmbedBuilder()
+        .setTitle(`\`🔻\`〢Ein Benutzer hat sich abgemeldet!`)
+        .setDescription(`・Benutzer: <@${interaction.user.id}>
+					・Minecraft Name: \`${name}\`
+                    ・Dauer: \`${duration}\`
+          			・Grund: \`${reason}\`
+                    ・Datum und Uhrzeit: ${formatDateInBerlinTimezone(new Date())}`)
+        .setColor('#E17272');
+
       
-//Modul - Ticket interaction end
+      const logChannel = interaction.guild.channels.cache.get(logChannelId);
+	
+      logChannel2.send({ embeds: [AbmeldungsEmbed] });
+      
+	interaction.reply({ content:`\`✅\`〢Du hast deine Abmeldung erfolgreich abgeschickt. Hier nochmal deine Angaben:
+
+> Benutzername: \`${name}\`
+> Dauer: \`${duration}\`
+> Grund: \`${reason}\``, ephemeral: true })	
+});
 
 client.commands = new Map();
 
@@ -241,32 +312,30 @@ const rest = new REST({ version: '9' }).setToken(token);
 
 (async () => {
   try {
-    console.log('Started refreshing application (/) commands.');
+    console.log('✅ | Aktualisiere die Slash Commands (/)');
 
     await rest.put(
       Routes.applicationCommands(clientId),
       { body: [...client.commands.values()].map(command => command.data.toJSON()) },
     );
 
-    console.log('Successfully reloaded application (/) commands.');
+    console.log('✅ | Alle Slash Commands (/) wurden erfolgreich geladen');
   } catch (error) {
     console.error(error);
   }
 })();
-
 client.on('interactionCreate', async interaction => {
   if (!interaction.isCommand()) return;
 
   const { commandName } = interaction;
 
   if (!client.commands.has(commandName)) return;
-
+    
   try {
     await client.commands.get(commandName).execute(interaction);
     } catch (error) {
     await interaction.reply({ content: '`❌`〢Es ist ein Fehler aufgetreten! Bitte melde folgenden Error einem Administrator:``` ' + error + "```", ephemeral: true });
-    console.error(error);
   }
 });
-startCooldownUpdateLoop();
+
 client.login(token);
